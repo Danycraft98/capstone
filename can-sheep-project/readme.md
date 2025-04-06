@@ -90,14 +90,13 @@ date_format_detection(departure_date,arrival_date, form_submit_date_YYYY_MM_DD)-
      		dateKeys[] date_diff_map.keys()
        		# there are only two possiblities
 	 	# DD MM or MM DD , just eliminate  the one that vilolates the precondition on duration
+    # secnario 3
+    # only one difference
+    # that diff is the day. Since the current year is 2025, no month can be 25th month so find the year and the remaing is the month
 
-   # secnario 3
-   # only one difference
-   # that diff is the day. Since the current year is 2025, no month can be 25th month so find the year and the remaing is the month
-
-   #secario 4
-   # no difference, ie everything was done on the same day. 
-   # raise a warning
+    # secario 4
+    # no difference, ie everything was done on the same day. 
+    # raise a warning
 			 		
        		
 					
