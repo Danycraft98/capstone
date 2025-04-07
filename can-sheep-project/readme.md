@@ -6,6 +6,7 @@ deliverable code goes here
 
 Date format detection
 # {skip} jan feb mar apr may jun jul aug sept oct nov dec
+```bash
 Month_day_count[null,31,28,31,30,31,30,31,31,30,31,30,31]
 
 #assume the same format for both departure, arrival and date
@@ -97,14 +98,4 @@ date_format_detection(departure_date,arrival_date, form_submit_date_YYYY_MM_DD)-
     # secario 4
     # no difference, ie everything was done on the same day. 
     # raise a warning
-			 		
-       		
-					
-				      
-   	
- 		
-     
-    
-
-
-    
+```
