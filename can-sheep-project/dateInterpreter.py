@@ -37,7 +37,7 @@ def attemptMonthOfyearFormat(date_string:str)->Optional[tuple]:
     try:
         # Attempt to parse the date string
         parsed_date = datetime.strptime(date_string, "%b %d, %Y")
-        return f"{parsed_date.year}-{parsed_date.month}-{parsed_date.day}"
+        return f"{parsed_date.year:02d}-{parsed_date.month:02d}-{parsed_date.day:02d}"
     except ValueError:
         # If parsing fails, return None
         return None
