@@ -5,5 +5,5 @@ def get_text(temp_file_path:str)->str:
     result = ocr.ocr(temp_file_path, cls=True)
     rtn =""
     for line in result[0]:
-        rtn=rtn+line[1][0]  # The text
+        rtn=rtn+" "+line[1][0]  # The text
     return rtn

@@ -12,3 +12,5 @@ python-dotenv
 nltk # required for ocr
 rapidfuzz
 Metaphone
+paddleOCR
+paddlepaddle
