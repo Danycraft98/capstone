@@ -1,1 +1,14 @@
-arrow
+transformers==4.51.2
+torch
+tensorFlow
+accelerate
+hf_xet
+# for open cv -- tentative requirement
+opencv-python
+# use lanchain openai
+langchain[openai]
+streamlit
+python-dotenv
+nltk # required for ocr
+rapidfuzz
+Metaphone

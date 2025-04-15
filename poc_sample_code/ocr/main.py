@@ -1,9 +1,9 @@
-from .got_ocr import get_text
-from .functions import *
+from got_ocr import get_text
+from functions import *
 
 def main():
     # Sample input
-    text = get_text("./Sample Form.png")
+    text = get_text("sample_images/Sample Form.png")
     # Extract and display dates
     dates = extract_dates(text)
     print("📅 Extracted Dates:")

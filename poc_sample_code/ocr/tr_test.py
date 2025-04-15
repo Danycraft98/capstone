@@ -6,7 +6,7 @@ import torch
 processor = TrOCRProcessor.from_pretrained("microsoft/trocr-base-handwritten")
 model = VisionEncoderDecoderModel.from_pretrained("microsoft/trocr-base-handwritten")
 
-img = Image.open("./sample2.png").convert("RGB")
+img = Image.open("./SampleForm.png").convert("RGB")
 pixel_values = processor(img, return_tensors="pt").pixel_values
 
 generated_ids = model.generate(pixel_values)
