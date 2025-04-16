@@ -56,6 +56,9 @@ with MainTab:
 
     if uploaded_file:
         st.write(text_from_scan)
+
+        if st.button("Clear Text"):
+            text_from_scan = ""  # Reset the text
     else:
         st.write("")
         st.markdown("""Upload a scanned form and press submit to get the results""")
