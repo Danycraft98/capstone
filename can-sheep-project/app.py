@@ -9,8 +9,8 @@ if uploaded_file:
     print(os.listdir(os.path.join(os.getcwd(), "tmp")))
     image=Image.open(uploaded_file)
     # not thread safe
-    image.save("./tmp/uploaded_file.png")
-    text_from_scan= ocr.get_text("./tmp/uploaded_file.png")
+    image.save("/tmp/uploaded_file.png")
+    text_from_scan= ocr.get_text("/tmp/uploaded_file.png")
     st.sidebar.image(image, caption='Uploaded Image', use_column_width=True)
 
 
