@@ -6,7 +6,7 @@ import os
 # We create a upload input field for users to enter their API key.
 uploaded_file = st.sidebar.file_uploader("Choose an image file")
 if uploaded_file:
-    print(os.getcwd())
+    print(os.listdir(os.path.join(os.get_cwd(), "tmp"))
     image=Image.open(uploaded_file)
     # not thread safe
     image.save("./tmp/uploaded_file.png")
