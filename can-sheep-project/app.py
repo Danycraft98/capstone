@@ -1,10 +1,12 @@
 import streamlit as st
 from PIL import Image
 from ocr import ocr
+import os
 # For elements to be displayed in the sidebar, we need to add the sidebar element in the widget.
 # We create a upload input field for users to enter their API key.
 uploaded_file = st.sidebar.file_uploader("Choose an image file")
 if uploaded_file:
+    print(os.getcwd())
     image=Image.open(uploaded_file)
     # not thread safe
     image.save("./tmp/uploaded_file.png")
