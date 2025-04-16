@@ -11,7 +11,9 @@ if uploaded_file:
     # not thread safe
     tmp_path = os.path.join(os.getcwd(), "tmp", "uploaded_file.png")
     image.save(tmp_path)
-    text_from_scan= ocr.get_text(tmp_path)
+
+    if os.path.isfile(tmp_path):
+        text_from_scan= ocr.get_text(tmp_path)
     st.sidebar.image(image, caption='Uploaded Image', use_column_width=True)
 
 
