@@ -7,8 +7,8 @@ uploaded_file = st.sidebar.file_uploader("Choose an image file")
 if uploaded_file:
     image=Image.open(uploaded_file)
     # not thread safe
-    image.save("./temp_file_dir/uploaded_file.png")
-    text_from_scan= ocr.get_text("./temp_file_dir/uploaded_file.png")
+    image.save("./tmp/uploaded_file.png")
+    text_from_scan= ocr.get_text("./tmp/uploaded_file.png")
     st.sidebar.image(image, caption='Uploaded Image', use_column_width=True)
 
 
