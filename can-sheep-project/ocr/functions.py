@@ -2,14 +2,46 @@ import re
 import nltk
 from rapidfuzz import process
 from metaphone import doublemetaphone  # pip install Metaphone
+import logging
+import re
 
-
+logging.getLogger(__name__).setLevel(logging.INFO)
 nltk.download('names')
 from nltk.corpus import names
 
 # Load and normalize names
 name_list = list(set(name.lower() for name in names.words()))
 
+def get_approximate_dates(text_from_scan) -> dict:
+    """ given scanned text try to extarct a dict of date"""
+    dateDictionary = dict()
+    pattern = r'date:(.*?)(?=name.*)'
+    dateDictionary["date:"] = extractDate(pattern ,text_from_scan)
+    dateDictionary["Date of animal departure:"] = extractDate(r'date of animal departure:(.*?)(?=date of animal.*)'
+                                                              ,text_from_scan)
+    dateDictionary["Date of animal arrival:"] = extractDate(r'date of animal arrival:(.*?)(?=pid of departure site:.*)'
+                                                              ,text_from_scan)
+    return dateDictionary
+
+def extractDate(pattern, text)->str:
+    """
+    Extracts a date based on the given pattern from the provided text.
+    Handles multiline text by using the re.DOTALL flag.
+    """
+    # Match the pattern across multiple lines
+    if re.search(pattern, text, re.IGNORECASE | re.DOTALL) is None:
+        raise ValueError(f"no date here matching {pattern}")
+
+    # Split the text based on the pattern
+    myparts = re.split(pattern, text, flags=re.IGNORECASE | re.DOTALL)
+    if len(myparts) == 3:
+        # If we have more than one part, return the first part after the pattern
+        return myparts[1].strip()
+    # for i in range(len(myparts)):
+    #     if "date:" in myparts[i].lower():
+    #         # If we found the date part, return it
+    #         return myparts[i + 1].strip()
+    raise ValueError(f"unexpected number of parts: {len(myparts)} for pattern {pattern} in text {text}")
 
 def extract_dates(text):
     """

@@ -1,6 +1,10 @@
 import streamlit as st
 from PIL import Image
 from ocr import ocr
+import logging
+
+logger = logging.getLogger(__name__)
+
 # For elements to be displayed in the sidebar, we need to add the sidebar element in the widget.
 # We create a upload input field for users to enter their API key.
 uploaded_file = st.sidebar.file_uploader("Choose an image file")
@@ -55,8 +59,10 @@ with MainTab:
     # Then, we create a intro text for the app, which we wrap in a st.markdown() widget.
 
     if uploaded_file:
+        logging.info(f"extracte text from image {text_from_scan}")
+        from ocr import functions         
+        functions.get_approximate_dates(text_from_scan)
         st.write(text_from_scan)
-
         if st.button("Clear Text"):
             text_from_scan = ""  # Reset the text
     else:
@@ -68,4 +74,5 @@ with MainTab:
 
     # All widget values will be sent to Streamlit in batch.
     # It makes the app faster!
+
     
