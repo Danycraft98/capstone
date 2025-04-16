@@ -6,11 +6,12 @@ import os
 # We create a upload input field for users to enter their API key.
 uploaded_file = st.sidebar.file_uploader("Choose an image file")
 if uploaded_file:
-    print(os.listdir(os.path.join(os.getcwd(), "tmp")))
     image=Image.open(uploaded_file)
+    
     # not thread safe
-    image.save("/tmp/uploaded_file.png")
-    text_from_scan= ocr.get_text("/tmp/uploaded_file.png")
+    tmp_path = os.path.join(os.getcwd(), "tmp", "uploaded_file.png")
+    image.save(tmp_path)
+    text_from_scan= ocr.get_text(tmp_path)
     st.sidebar.image(image, caption='Uploaded Image', use_column_width=True)
 
 
