@@ -9,7 +9,7 @@ if uploaded_file:
     image=Image.open(uploaded_file)
     
     # not thread safe
-    tmp_path = os.path.join(os.getcwd(), "tmp", "uploaded_file.png")
+    tmp_path = os.path.join(".", "tmp", "uploaded_file.png")
     image.save(tmp_path)
 
     if os.path.isfile(tmp_path):
