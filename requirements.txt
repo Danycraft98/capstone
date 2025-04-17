@@ -14,3 +14,4 @@ rapidfuzz
 Metaphone
 paddleOCR
 paddlepaddle
+langchain_community
