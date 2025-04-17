@@ -10,8 +10,8 @@ class TestDateStringInterpretter(unittest.TestCase):
     
     def test_if_we_cant_find_a_date(self):
         with self.assertRaises(ValueError) as context:
-            functions.get_approximate_dates("some baloney string date:Name") 
-        self.assertEqual(str(context.exception), "no date here matching (\s*date:)(.*)(name.*)")
+            functions.get_approximate_dates("no date here matching date of animal departure:(.*?)(?=date of animal.*)") 
+        self.assertEqual(str(context.exception), "no date here matching ")
 
     def test_if_we_can_find_departure_date(self):
         someText=functions.get_approximate_dates("""Date: 1-11-23 Name Sepf Houle Reason for report (please circle) Movement of animals off farm Retirement of tag (carcass disposal) Movement of incoming animals Approved indicator replacement M Transportahion of animals Date of animal departure:1S-11-Z3 Date of animal arrival:ICo-ll-Z3 PID of departure site:""")
