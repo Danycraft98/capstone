@@ -60,9 +60,10 @@ with MainTab:
 
     if uploaded_file:
         logging.info(f"extracte text from image {text_from_scan}")
-        from ocr import functions         
-        functions.get_approximate_dates(text_from_scan)
+        from ocr import functions
+        possibe_dates=functions.parse_dates(text_from_scan)
         st.write(text_from_scan)
+        st.table(possibe_dates)
         if st.button("Clear Text"):
             text_from_scan = ""  # Reset the text
     else:
