@@ -19,10 +19,6 @@ class TestDateStringInterpretter(unittest.TestCase):
         self.assertEqual(someText["Date of animal arrival:"], "ICo-ll-Z3")
         self.assertEqual(someText["Date of animal departure:"], "1S-11-Z3")
         self.assertEqual(someText["date:"], "1-11-23")
-        # self.assertDictEqual(someText, {"date:":"1-11-23",  
-        #                                 "Date of animal departure:":"1S-11-Z3",
-        #                                 "Date of animal arrival:":"ICo-ll-Z3"
-        #                                 } ) 
         
 
     def test_given_text_extract_approxmate_dates(self):
@@ -41,3 +37,24 @@ class TestDateStringInterpretter(unittest.TestCase):
         self.assertEqual(extract_dates["Date of animal arrival:"], "16-11-23")
         self.assertEqual(extract_dates["Date of animal departure:"], "15-11-23")
         self.assertEqual(extract_dates["date:"], "1-11-23")
+
+    def test_tranform_date_to_YYYYMMDD_missing_comma(self):
+        result = functions.tranform_date_to_YYYYMMDD("JUL 23rd 23")
+        self.assertEqual(result, "2023-07-23")
+
+
+    def test_tranform_date_to_YYYYMMDD_comma(self):
+        result = functions.tranform_date_to_YYYYMMDD("JUL 23, 23")
+        self.assertEqual(result, "2023-07-23")
+
+    def test_tranform_date_to_YYYYMMDD_appostrofy(self):
+        result = functions.tranform_date_to_YYYYMMDD("'23 JUL 21")
+        self.assertEqual(result, "2023-07-21")
+
+    def test_tranform_date_to_YYYYMMDD_appostrofy(self):
+        result = functions.tranform_date_to_YYYYMMDD("'23 JUL 21")
+        self.assertEqual(result, "2023-07-21")
+
+    def test_tranform_date_to_YYYYMMDD_plausible_date_bad_order(self):
+        result = functions.tranform_date_to_YYYYMMDD("07-21-2023")
+        self.assertEqual(result, "2023-07-21")

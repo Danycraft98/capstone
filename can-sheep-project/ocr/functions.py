@@ -7,10 +7,17 @@ import re
 from dotenv import load_dotenv
 import os
 
+from langchain.chat_models import ChatOpenAI
+from langchain.prompts import PromptTemplate
+from langchain.chains import LLMChain
+
 logging.getLogger(__name__).setLevel(logging.INFO)
 nltk.download('names')
 from nltk.corpus import names
 
+openai_api_key = os.getenv("OPENAI_API_KEY")
+# Initialize the OpenAI model (use "gpt-4" or "gpt-3.5-turbo")
+llm = ChatOpenAI(model="gpt-4", temperature=0, openai_api_key=openai_api_key)
 
 load_dotenv()
 # Load and normalize names
@@ -36,8 +43,8 @@ def parse_dates(text_from_scan):
 def get_approximate_dates(text_from_scan) -> dict:
     """ given scanned text try to extarct a dict of date"""
     dateDictionary = dict()
-    pattern = r'date:(.*?)(?=name.*)'
-    dateDictionary["date:"] = extractDate(pattern ,text_from_scan)
+    dateDictionary["date:"] = extractDate(r'date:(.*?)(?=name.*)' 
+                                          ,text_from_scan)
     dateDictionary["Date of animal departure:"] = extractDate(r'date of animal departure:(.*?)(?=date of animal.*)'
                                                               ,text_from_scan)
     dateDictionary["Date of animal arrival:"] = extractDate(r'date of animal arrival:(.*?)(?=pid of departure site:.*)'
@@ -58,20 +65,9 @@ def extractDate(pattern, text)->str:
     if len(myparts) == 3:
         # If we have more than one part, return the first part after the pattern
         return myparts[1].strip()
-    # for i in range(len(myparts)):
-    #     if "date:" in myparts[i].lower():
-    #         # If we found the date part, return it
-    #         return myparts[i + 1].strip()
     raise ValueError(f"unexpected number of parts: {len(myparts)} for pattern {pattern} in text {text}")
 
 def correct_ocr_errors(text):
-    from langchain.chat_models import ChatOpenAI
-    from langchain.prompts import PromptTemplate
-    from langchain.chains import LLMChain
-
-    openai_api_key = os.getenv("OPENAI_API_KEY")
-    # Initialize the OpenAI model (use "gpt-4" or "gpt-3.5-turbo")
-    llm = ChatOpenAI(model="gpt-4", temperature=0, openai_api_key=openai_api_key)
 
     # Define a prompt template for correcting OCR errors
     prompt = PromptTemplate(
@@ -90,6 +86,31 @@ def correct_ocr_errors(text):
     corrected_text = ocr_correction_chain.run(ocr_text)
     return corrected_text
 
+def tranform_date_to_YYYYMMDD(date_string):
+    """
+    Given the date string and the varous formats, defer this work to the LLM
+    """
+    date_string = date_string.replace("'", "20")    
+    # Define a prompt template for correcting OCR errors
+    prompt = PromptTemplate(
+        input_variables=["date_string"],
+        template="""Assume the the following date is correct please transform it to YYYY-MM-DD format. If the date is 
+         ambigious then assume the year field is the field that matches the last for digits of the current year, if there is an appostroy 
+        then assume the year follows the appostrophy. If the date is not parsable then return 
+        the word "unknown". 
+
+
+        the date to transform is :\n\n{date_string}\n\n"""
+    )
+
+    # Create an LLM chain
+    ocr_correction_chain = LLMChain(llm=llm, prompt=prompt)
+
+
+    # Run the chain to correct the OCR text
+    formatted_date= ocr_correction_chain.run(date_string)
+    extractedDate= re.split(r"(\d{4}-\d{2}-\d{2})", formatted_date)
+    return extractedDate[1] if len(extractedDate) > 1 else "unknown"
 
 def suggest_names(ocr_text, top_n=10, max_length_diff=1):
     """
