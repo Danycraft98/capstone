@@ -38,23 +38,31 @@ class TestDateStringInterpretter(unittest.TestCase):
         self.assertEqual(extract_dates["Date of animal departure:"], "15-11-23")
         self.assertEqual(extract_dates["date:"], "1-11-23")
 
+    def test_extract_times(self):
+        temp_file_path = "./can-sheep-project/temp_file_dir/uploaded_file.png"
+        extracted_text = ocr.get_text(temp_file_path)
+        extracted_text=functions.correct_ocr_errors(extracted_text)
+        extract_dates=functions.get_approximate_times(dict(),extracted_text)
+        self.assertEqual(extract_dates["Time of animal departure:"], "23:45")
+        self.assertEqual(extract_dates["Time of animal arrival:"], "12:45")
+
     def test_tranform_date_to_YYYYMMDD_missing_comma(self):
-        result = functions.tranform_date_to_YYYYMMDD("JUL 23rd 23")
-        self.assertEqual(result, "2023-07-23")
+        result = functions.tranform_date_to_YYYYMMDD("JUL 23rd 23", "14:45 pm")
+        self.assertEqual(result, "2023-07-23 14:45")
 
 
     def test_tranform_date_to_YYYYMMDD_comma(self):
-        result = functions.tranform_date_to_YYYYMMDD("JUL 23, 23")
-        self.assertEqual(result, "2023-07-23")
+        result = functions.tranform_date_to_YYYYMMDD("JUL 23, 23", "12:45 am")
+        self.assertEqual(result, "2023-07-23 00:45")
 
     def test_tranform_date_to_YYYYMMDD_appostrofy(self):
-        result = functions.tranform_date_to_YYYYMMDD("'23 JUL 21")
-        self.assertEqual(result, "2023-07-21")
+        result = functions.tranform_date_to_YYYYMMDD("'23 JUL 21","12:45 pm")
+        self.assertEqual(result, "2023-07-21 12:45")
 
     def test_tranform_date_to_YYYYMMDD_appostrofy(self):
-        result = functions.tranform_date_to_YYYYMMDD("'23 JUL 21")
-        self.assertEqual(result, "2023-07-21")
+        result = functions.tranform_date_to_YYYYMMDD("'23 JUL 21", "5:5")
+        self.assertEqual(result, "2023-07-21 05:05")
 
     def test_tranform_date_to_YYYYMMDD_plausible_date_bad_order(self):
-        result = functions.tranform_date_to_YYYYMMDD("07-21-2023")
-        self.assertEqual(result, "2023-07-21")
+        result = functions.tranform_date_to_YYYYMMDD("07-21-2023", "1:5 pm")
+        self.assertEqual(result, "2023-07-21 13:05")

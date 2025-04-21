@@ -7,6 +7,8 @@ import re
 from dotenv import load_dotenv
 import os
 
+import datetime
+
 from langchain.chat_models import ChatOpenAI
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
@@ -33,25 +35,48 @@ def parse_dates(text_from_scan):
     corrected_text = correct_ocr_errors(text_from_scan)
     
     # Extract dates again from the corrected text
-    corrected_date_dict = get_approximate_dates(corrected_text)
-    
+    approximate_dates_dict = get_approximate_dates(corrected_text)
+    approximate_dates_dict=get_approximate_times(correct_ocr_errors, text_from_scan)
+    for key, value in approximate_dates_dict.items():
+        # Normalize the date to YYYY-MM-DD format
+        try:
+            approximate_dates_dict[key] = tranform_date_to_YYYYMMDD(value)
+        except Exception as e:
+            logging.error(f"Error transforming date for key {key}: {e}")
+            approximate_dates_dict[key] = "unknown"
+
+    corrected_dates=corrected_dates(approximate_dates_dict, datetime.datetime.today)
     # Return the corrected dates
-    return corrected_date_dict
+    return approximate_dates_dict
 
+def corrected_dates(approximate_dates_dict,current_date:datetime.datetime):
+    # matin look here 
+    dateTimeFormat = "%Y-%m-%d %H:%M"
+    # lets assume that submission date must be with in the last 15 days
 
+    return None
+
+def get_approximate_times(approximate_dates_dict, text_from_scan)->dict:
+
+    approximate_dates_dict["Time of animal departure:"] = extractString(r'Time of departure:(.*?)(?=Time of arrival:.*)',
+                                                                text_from_scan)
+    approximate_dates_dict["Time of animal arrival:"] = extractString(r'Time of arrival:(.*?)(?=License plate number.*)',
+                                                                text_from_scan)
+    return approximate_dates_dict
 
 def get_approximate_dates(text_from_scan) -> dict:
-    """ given scanned text try to extarct a dict of date"""
+    """ given scanned text try to extarct a dict of date
+        and normalize the date to YYYY-MM-DD format
+    """
     dateDictionary = dict()
-    dateDictionary["date:"] = extractDate(r'date:(.*?)(?=name.*)' 
-                                          ,text_from_scan)
-    dateDictionary["Date of animal departure:"] = extractDate(r'date of animal departure:(.*?)(?=date of animal.*)'
+    dateDictionary["date:"] = extractString(r'date:(.*?)(?=name.*)' ,text_from_scan)
+    dateDictionary["Date of animal departure:"] = extractString(r'date of animal departure:(.*?)(?=date of animal.*)'
                                                               ,text_from_scan)
-    dateDictionary["Date of animal arrival:"] = extractDate(r'date of animal arrival:(.*?)(?=pid of departure site:.*)'
+    dateDictionary["Date of animal arrival:"] = extractString(r'date of animal arrival:(.*?)(?=pid of departure site:.*)'
                                                               ,text_from_scan)
     return dateDictionary
 
-def extractDate(pattern, text)->str:
+def extractString(pattern, text)->str:
     """
     Extracts a date based on the given pattern from the provided text.
     Handles multiline text by using the re.DOTALL flag.
@@ -67,7 +92,7 @@ def extractDate(pattern, text)->str:
         return myparts[1].strip()
     raise ValueError(f"unexpected number of parts: {len(myparts)} for pattern {pattern} in text {text}")
 
-def correct_ocr_errors(text):
+def correct_ocr_errors(text)-> str:
 
     # Define a prompt template for correcting OCR errors
     prompt = PromptTemplate(
@@ -86,15 +111,16 @@ def correct_ocr_errors(text):
     corrected_text = ocr_correction_chain.run(ocr_text)
     return corrected_text
 
-def tranform_date_to_YYYYMMDD(date_string):
+def tranform_date_to_YYYYMMDD(date_string,timeString):
     """
     Given the date string and the varous formats, defer this work to the LLM
     """
-    date_string = date_string.replace("'", "20")    
+    date_string = date_string.replace("'", "20") 
+    date_string= f"{date_string} {timeString}"   
     # Define a prompt template for correcting OCR errors
     prompt = PromptTemplate(
         input_variables=["date_string"],
-        template="""Assume the the following date is correct please transform it to YYYY-MM-DD format. If the date is 
+        template="""Assume the the following date is correct please transform it to "%Y-%m-%d %H:%M format. If the date is 
          ambigious then assume the year field is the field that matches the last for digits of the current year, if there is an appostroy 
         then assume the year follows the appostrophy. If the date is not parsable then return 
         the word "unknown". 
@@ -109,7 +135,7 @@ def tranform_date_to_YYYYMMDD(date_string):
 
     # Run the chain to correct the OCR text
     formatted_date= ocr_correction_chain.run(date_string)
-    extractedDate= re.split(r"(\d{4}-\d{2}-\d{2})", formatted_date)
+    extractedDate= re.split(r"(\d{4}-\d{2}-\d{2} \d{1,2}:\d{1,2})", formatted_date)
     return extractedDate[1] if len(extractedDate) > 1 else "unknown"
 
 def suggest_names(ocr_text, top_n=10, max_length_diff=1):
