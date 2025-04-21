@@ -7,67 +7,68 @@ pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tessera
 
 
 def detect_circles(image):
-    
     original = image.copy()
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-    # Improve contrast and noise removal
+    # Blur and Threshold (adjust thresholds if needed)
     #blurred = cv2.medianBlur(gray, 5)
-    blurred = cv2.GaussianBlur(gray, (3, 3), 0)
+    blurred = cv2.GaussianBlur(gray, (3, 3), 0) #5,5
     _, thresh = cv2.threshold(blurred, 180, 255, cv2.THRESH_BINARY_INV)
-
-    # Connect broken ovals
-    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (15, 15))
-    _ = cv2.dilate(thresh, kernel, iterations=1)
 
     # Find contours
     contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     return original, gray, contours
 
 
-def segment_word(word):
-    """Segments a word into potential valid words, handling prefixes and unexpected characters."""
+def is_handdrawn_circle(gray_image, x, y, w, h):
+    """
+    Verifies if the given region (x, y, w, h) contains a hand-drawn circle or oval.
+    :param gray_image: Grayscale image (cv2.COLOR_BGR2GRAY).
+    :param x, y, w, h: Coordinates of the region to check.
+    :return: True if a circle/oval is detected, else False.
+    """
 
-    # Preprocessing: Remove non-alphanumeric characters except spaces
-    word = re.sub(r"[^\w\s]", "", word)
-    if d.check(word):
-        return [word]  # Already a valid word
+    # Crop the region of interest
+    roi = gray_image[y:y + h, x:x + w]
 
-    n = len(word)
-    # Attempt segmentation with potential prefix removal
-    for prefix_len in range(1, min(4, n)):  # Try prefixes up to 3 characters long
-        prefix = word[:prefix_len]
-        remaining_word = word[prefix_len:]
-        if not prefix.isalpha(): # Check if prefix is non-alphabetic
-          segmented_remaining = segment_word(remaining_word) # Recursive call for the rest
-          if len(segmented_remaining) > 1 or d.check(segmented_remaining[0]): # Check validity of segmentation
-            return segmented_remaining # If segmentation is valid, accept result
+    # Preprocessing
+    blurred = cv2.GaussianBlur(roi, (3, 3), 0)
+    _, thresh = cv2.threshold(blurred, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
 
-    # Regular segmentation
-    for i in range(1, n):
-        prefix = word[:i]
-        suffix = word[i:]
-        if d.check(prefix) and d.check(suffix):
-            return [prefix, suffix]
+    # Find contours in the region
+    contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-    #If no valid words can be segmented
-    if not d.check(word):
-      # Find the longest valid prefix
-      longest_prefix = ""
-      for i in range(1, len(word)):
-          prefix = word[:i]
-          if d.check(prefix):
-              longest_prefix = prefix
-          else:
-              break
-      if longest_prefix:
-          #If longest prefix found, return it and recursively call on the rest
-          return [longest_prefix] + segment_word(word[len(longest_prefix):])
-      else:
-          # If no prefix is found, return the original word
-          return [word]
+    for cnt in contours:
+        area = cv2.contourArea(cnt)
+        if area < 50:  # too small to be meaningful
+            continue
 
-    return [word]  # No valid segmentation found
+        # Fit ellipse only if contour has sufficient points
+        if len(cnt) >= 5:
+            ellipse = cv2.fitEllipse(cnt)
+            (cx, cy), (MA, ma), angle = ellipse
+            aspect_ratio = max(MA, ma) / min(MA, ma)
+        else:
+            aspect_ratio = None
+
+        # Circularity check
+        perimeter = cv2.arcLength(cnt, True)
+        circularity = 4 * np.pi * area / (perimeter ** 2) if perimeter != 0 else 0
+
+        # Extent = contour area / bounding box area
+        x_cnt, y_cnt, w_cnt, h_cnt = cv2.boundingRect(cnt)
+        rect_area = w_cnt * h_cnt
+        extent = float(area) / rect_area if rect_area != 0 else 0
+
+        # Criteria for hand-drawn circle or oval:
+        # - moderate extent (not too sparse),
+        # - acceptable circularity (not square/line),
+        # - relaxed aspect ratio for ovals
+        if extent > 0.3 and circularity > 0.4:
+            if aspect_ratio is None or (1.0 <= aspect_ratio <= 9.0):
+                return True
+
+    return False
 
 
 def extract_circled_texts(image_path, debug=False):
@@ -84,30 +85,23 @@ def extract_circled_texts(image_path, debug=False):
         x, y, w, h = cv2.boundingRect(cnt)
         aspect_ratio = w / float(h)
 
-        # Check for open circles using circularity
-        perimeter = cv2.arcLength(cnt, True)
-        circularity = 4 * np.pi * area / (perimeter ** 2)
-
-        if 0.5 < aspect_ratio < 2.0 or len(cnt) >= 5 and circularity < 0.85:
-            # Crop slightly larger region around contour
-            pad = 10
-            x1, y1 = max(x - pad, 0), max(y - pad, 0)
-            x2, y2 = min(x + w + pad, image.shape[1]), min(y + h + pad, image.shape[0])
-            roi = gray[y1:y2, x1:x2]
+        if 1.0 <= aspect_ratio < 10.0:
+            roi = gray[y:y + h, x:x + w]
 
             # Enhance OCR accuracy (experiment with these)
             roi = cv2.resize(roi, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
             roi = cv2.GaussianBlur(roi, (3, 3), 0)
-            _, roi_thresh = cv2.threshold(roi, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+            #_, roi_thresh = cv2.threshold(roi, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 
             # Apply adaptive thresholding
-            roi_thresh = cv2.adaptiveThreshold(roi, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
+            roi_thresh2 = cv2.adaptiveThreshold(roi, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
 
-            # Use Tesseract with specific config (adjust if needed)
-            text = pytesseract.image_to_string(roi_thresh, config='--psm 6 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz')
-            if 1 <= len(text) <= 50 and text.strip():
+
+            # Use Tesseract with specific config (adjust if needed) + --oem 1
+            config = "--psm 6 --oem 1 -c tessedit_char_whitelist='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz '"
+            text = pytesseract.image_to_string(roi_thresh2, config=config).strip()
+            if 2 <= len(text) <= 50 and text and is_handdrawn_circle(gray, x, y, w, h):
                 open_circled_texts.append((text, (x, y, w, h)))
-                print(text, segment_word(text))
                 if debug:
                     cv2.rectangle(original, (x, y), (x + w, y + h), (0, 255, 0), 2)
                     cv2.putText(original, text, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 1)
