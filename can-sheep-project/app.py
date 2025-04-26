@@ -12,7 +12,8 @@ if uploaded_file:
     image=Image.open(uploaded_file)
     # not thread safe
     image.save("./temp_file_dir/uploaded_file.png")
-    text_from_scan= ocr.get_text("./temp_file_dir/uploaded_file.png")
+    # file_content= ocr.get_text("./temp_file_dir/uploaded_file.png")
+    file_content= ocr.get_encoded_file("./temp_file_dir/uploaded_file.png")
     st.sidebar.image(image, caption='Uploaded Image', use_column_width=True)
 
 
@@ -59,13 +60,14 @@ with MainTab:
     # Then, we create a intro text for the app, which we wrap in a st.markdown() widget.
 
     if uploaded_file:
-        logging.info(f"extracte text from image {text_from_scan}")
         from ocr import functions
-        possibe_dates=functions.parse_dates(text_from_scan)
-        st.write(text_from_scan)
-        st.table(possibe_dates)
+        parsed_text = functions.translate_text(file_content)
+        logging.info(f"extract text from image {parsed_text}")
+        # possibe_dates=functions.parse_dates(file_content)
+        st.write(parsed_text)
+        # st.table(possibe_dates)
         if st.button("Clear Text"):
-            text_from_scan = ""  # Reset the text
+            file_content = ""  # Reset the text
     else:
         st.write("")
         st.markdown("""Upload a scanned form and press submit to get the results""")

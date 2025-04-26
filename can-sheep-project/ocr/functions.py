@@ -14,69 +14,106 @@ from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
 
 logging.getLogger(__name__).setLevel(logging.INFO)
-nltk.download('names')
+nltk.download("names")
 from nltk.corpus import names
 
+
+load_dotenv()
 openai_api_key = os.getenv("OPENAI_API_KEY")
 # Initialize the OpenAI model (use "gpt-4" or "gpt-3.5-turbo")
 llm = ChatOpenAI(model="gpt-4", temperature=0, openai_api_key=openai_api_key)
 
-load_dotenv()
 # Load and normalize names
 name_list = list(set(name.lower() for name in names.words()))
+
+def translate_text(text):
+    from langchain.chat_models import ChatOpenAI
+    from langchain.schema import HumanMessage, SystemMessage
+
+    # Initialize the ChatOpenAI model with Vision (GPT-4 Vision Preview)
+    chat = ChatOpenAI(
+        model="gpt-4o",
+        temperature=0,
+        max_tokens=2000,
+    )
+
+    # Create a multimodal message
+    messages = [
+        SystemMessage(content="You are an expert at describing images."),
+        HumanMessage(
+            content=[
+                {
+                    "type": "text",
+                    "text": "please extract the text from the image and return it in a JSON format. "
+                },
+                {
+                    "type": "file",
+                    "image": {
+                        "base64": text
+                    }
+                }
+            ]
+        )
+    ]
+
+    # Call the model
+    response = chat(messages)
+    return response.content
 
 def parse_dates(text_from_scan):
     """
     Given a scanned text, this function attempts to extract a dictionary of dates.
     It uses regular expressions to find specific date patterns in the text.
     """
-    
     # Correct OCR errors in the extracted text
     corrected_text = correct_ocr_errors(text_from_scan)
-    
+
     # Extract dates again from the corrected text
-    approximate_dates_dict = get_approximate_dates(corrected_text)
-    approximate_dates_dict=get_approximate_times(correct_ocr_errors, text_from_scan)
-    for key, value in approximate_dates_dict.items():
+    approximate_dates_dict = get_approximate_dateTime(corrected_text)
+
+    # just use the dates to drive
+    corrected_dateTime_dict = dict()
+    for key in ["departure:", "arrival:"]:
         # Normalize the date to YYYY-MM-DD format
         try:
-            approximate_dates_dict[key] = tranform_date_to_YYYYMMDD(value)
+            corrected_dateTime_dict[key] = tranform_date_to_YYYYMMDD(approximate_dates_dict[key])
         except Exception as e:
             logging.error(f"Error transforming date for key {key}: {e}")
             approximate_dates_dict[key] = "unknown"
 
-    corrected_dates=corrected_dates(approximate_dates_dict, datetime.datetime.today)
     # Return the corrected dates
-    return approximate_dates_dict
+    return corrected_dateTime_dict
 
-def corrected_dates(approximate_dates_dict,current_date:datetime.datetime):
-    # matin look here 
-    dateTimeFormat = "%Y-%m-%d %H:%M"
-    # lets assume that submission date must be with in the last 15 days
 
-    return None
 
-def get_approximate_times(approximate_dates_dict, text_from_scan)->dict:
-
-    approximate_dates_dict["Time of animal departure:"] = extractString(r'Time of departure:(.*?)(?=Time of arrival:.*)',
-                                                                text_from_scan)
-    approximate_dates_dict["Time of animal arrival:"] = extractString(r'Time of arrival:(.*?)(?=License plate number.*)',
-                                                                text_from_scan)
-    return approximate_dates_dict
-
-def get_approximate_dates(text_from_scan) -> dict:
-    """ given scanned text try to extarct a dict of date
-        and normalize the date to YYYY-MM-DD format
+def get_approximate_dateTime(text_from_scan) -> dict:
+    """given scanned text try to extarct a dict of date
+    and normalize the date to YYYY-MM-DD format
     """
-    dateDictionary = dict()
-    dateDictionary["date:"] = extractString(r'date:(.*?)(?=name.*)' ,text_from_scan)
-    dateDictionary["Date of animal departure:"] = extractString(r'date of animal departure:(.*?)(?=date of animal.*)'
-                                                              ,text_from_scan)
-    dateDictionary["Date of animal arrival:"] = extractString(r'date of animal arrival:(.*?)(?=pid of departure site:.*)'
-                                                              ,text_from_scan)
-    return dateDictionary
+    dateTimeDictionary = dict()
+    dateTimeDictionary["submit:"] = extractString(r"date:(.*?)(?=name.*)", text_from_scan)
 
-def extractString(pattern, text)->str:
+    departureDate = extractString(
+        r"date of animal departure:(.*?)(?=date of animal.*)", text_from_scan
+    )
+    arrivalDate = extractString(
+        r"date of animal arrival:(.*?)(?=pid of departure site:.*)", text_from_scan
+    )
+
+
+    departureTime= extractString(
+        r"Time of departure:(.*?)(?=Time of arrival:.*)", text_from_scan
+    )
+    arrivalTime= extractString(
+        r"Time of arrival:(.*?)(?=License plate number.*)", text_from_scan
+    )
+
+    dateTimeDictionary["departure:"] = f"{departureDate}  {departureTime}"
+    dateTimeDictionary["arrival:"] = f"{arrivalDate}  {arrivalTime}"
+    return dateTimeDictionary
+
+
+def extractString(pattern, text) -> str:
     """
     Extracts a date based on the given pattern from the provided text.
     Handles multiline text by using the re.DOTALL flag.
@@ -90,15 +127,18 @@ def extractString(pattern, text)->str:
     if len(myparts) == 3:
         # If we have more than one part, return the first part after the pattern
         return myparts[1].strip()
-    raise ValueError(f"unexpected number of parts: {len(myparts)} for pattern {pattern} in text {text}")
+    raise ValueError(
+        f"unexpected number of parts: {len(myparts)} for pattern {pattern} in text {text}"
+    )
 
-def correct_ocr_errors(text)-> str:
+
+def correct_ocr_errors(text) -> str:
 
     # Define a prompt template for correcting OCR errors
     prompt = PromptTemplate(
         input_variables=["ocr_text"],
         template="The following text was extracted using OCR and may contain errors:\n\n{ocr_text}\n\n"
-                "Please correct any errors and return the corrected text."
+        "Please correct any errors and return the corrected text.",
     )
 
     # Create an LLM chain
@@ -111,12 +151,12 @@ def correct_ocr_errors(text)-> str:
     corrected_text = ocr_correction_chain.run(ocr_text)
     return corrected_text
 
-def tranform_date_to_YYYYMMDD(date_string,timeString):
+
+def tranform_date_to_YYYYMMDD(date_string):
     """
     Given the date string and the varous formats, defer this work to the LLM
     """
-    date_string = date_string.replace("'", "20") 
-    date_string= f"{date_string} {timeString}"   
+    date_string = date_string.replace("'", "20")
     # Define a prompt template for correcting OCR errors
     prompt = PromptTemplate(
         input_variables=["date_string"],
@@ -126,17 +166,17 @@ def tranform_date_to_YYYYMMDD(date_string,timeString):
         the word "unknown". 
 
 
-        the date to transform is :\n\n{date_string}\n\n"""
+        the date to transform is :\n\n{date_string}\n\n""",
     )
 
     # Create an LLM chain
     ocr_correction_chain = LLMChain(llm=llm, prompt=prompt)
 
-
     # Run the chain to correct the OCR text
-    formatted_date= ocr_correction_chain.run(date_string)
-    extractedDate= re.split(r"(\d{4}-\d{2}-\d{2} \d{1,2}:\d{1,2})", formatted_date)
+    formatted_date = ocr_correction_chain.run(date_string)
+    extractedDate = re.split(r"(\d{4}-\d{2}-\d{2} \d{1,2}:\d{1,2})", formatted_date)
     return extractedDate[1] if len(extractedDate) > 1 else "unknown"
+
 
 def suggest_names(ocr_text, top_n=10, max_length_diff=1):
     """
@@ -160,10 +200,14 @@ def suggest_names(ocr_text, top_n=10, max_length_diff=1):
     ocr_len = len(ocr_text)
 
     # Filter name list by length similarity
-    length_filtered_names = [name for name in name_list if abs(len(name) - ocr_len) <= max_length_diff]
+    length_filtered_names = [
+        name for name in name_list if abs(len(name) - ocr_len) <= max_length_diff
+    ]
 
     # Fuzzy matching
-    fuzzy_matches = process.extract(ocr_text, length_filtered_names, limit=50, score_cutoff=50)
+    fuzzy_matches = process.extract(
+        ocr_text, length_filtered_names, limit=50, score_cutoff=50
+    )
 
     # Phonetic match
     ocr_sound = doublemetaphone(ocr_text)[0]
