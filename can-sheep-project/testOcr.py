@@ -69,6 +69,6 @@ class TestDateStringInterpretter(unittest.TestCase):
 
     def test_parse_dates_should_return_dict(self):
         temp_file_path = "./can-sheep-project/temp_file_dir/uploaded_file.png"
-        extracted_text = ocr.get_text(temp_file_path)
-        extract_dates=functions.parse_dates(extracted_text)
+        extracted_text = ocr.get_encoded_file(temp_file_path)
+        extract_dates=functions.translate_text(extracted_text)
         self.assertIsInstance(extract_dates, dict)

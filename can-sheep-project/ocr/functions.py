@@ -27,38 +27,38 @@ llm = ChatOpenAI(model="gpt-4", temperature=0, openai_api_key=openai_api_key)
 name_list = list(set(name.lower() for name in names.words()))
 
 def translate_text(text):
-    from langchain.chat_models import ChatOpenAI
-    from langchain.schema import HumanMessage, SystemMessage
+    from openai import OpenAI
 
+    client = OpenAI()
     # Initialize the ChatOpenAI model with Vision (GPT-4 Vision Preview)
-    chat = ChatOpenAI(
-        model="gpt-4o",
-        temperature=0,
-        max_tokens=2000,
-    )
+    # chat = ChatOpenAI(
+    #     model="gpt-4o",
+    #     temperature=0,
+    #     max_tokens=2000,
+    # )
 
-    # Create a multimodal message
-    messages = [
-        SystemMessage(content="You are an expert at describing images."),
-        HumanMessage(
-            content=[
-                {
-                    "type": "text",
-                    "text": "please extract the text from the image and return it in a JSON format. "
-                },
-                {
-                    "type": "file",
-                    "image": {
-                        "base64": text
-                    }
-                }
-            ]
-        )
-    ]
-
+#--------------
+    response = client.responses.create(
+    model="gpt-4o",
+    input=[
+        {
+            "role": "user",
+            "content": [
+                {"type": "input_text", "text": "Please extract the text from the image and return it in a JSON format."},
+                {"type": "input_image", "image_url": f"data:image/png;base64,{text}"},
+            ],
+        }
+    ],
+)
+ ##-------------------
+ 
+ 
     # Call the model
-    response = chat(messages)
-    return response.content
+
+    logging.info("Calling the model"+str(response))
+    returnString=response.output_text.replace("json", '')
+    returnString= returnString.replace("```", "")
+    return returnString
 
 def parse_dates(text_from_scan):
     """
