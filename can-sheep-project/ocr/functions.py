@@ -34,17 +34,17 @@ def translate_text(text):
 
 #--------------
     response = client.responses.create(
-        model="gpt-4o",
-        input=[
-            {
-                "role": "user",
-                "content": [
-                    {"type": "input_text", "text": "Please extract the text from the image and return it in a JSON format."},
-                    {"type": "input_image", "image_url": f"data:image/png;base64,{text}"},
-                ],
-            }
-        ],
-    )
+    model="gpt-4o",
+    input=[
+        {
+            "role": "user",
+            "content": [
+                {"type": "input_text", "text": "Please extract the text from the image and return it in a JSON format."},
+                {"type": "input_image", "image_url": f"data:image/png;base64,{text}"},
+            ],
+        }
+    ],
+)
  ##-------------------
  
  

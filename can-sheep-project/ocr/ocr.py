@@ -1,6 +1,5 @@
 import base64
 
-
 def get_text(temp_file_path:str)->str:
     from paddleocr import PaddleOCR
     ocr = PaddleOCR(use_angle_cls=True, lang='en', use_gpu=False)

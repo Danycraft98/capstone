@@ -4,7 +4,7 @@ import torch
 pipe = pipeline(
     "image-text-to-text",
     model="google/gemma-3-27b-it",
-    device="cuda",
+    device="cpu",
     torch_dtype=torch.bfloat16,
     # add access details here 
 )
@@ -17,7 +17,7 @@ messages = [
     {
         "role": "user",
         "content": [
-            {"type": "image", "url": "https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/p-blog/candy.JPG"},
+            {"type": "image", "url": "file://sample_images/Sample Form.png"},
             {"type": "text", "text": "What animal is on the candy?"}
         ]
     }

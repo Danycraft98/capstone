@@ -1,6 +1,3 @@
-<<<<<<< Updated upstream
-import streamlit as st
-=======
 import json
 import logging
 import streamlit as st
@@ -11,17 +8,11 @@ from ocr import ocr
 from ocr import functions
 
 logger = logging.getLogger(__name__)
->>>>>>> Stashed changes
 
 
 # For elements to be displayed in the sidebar, we need to add the sidebar element in the widget.
 # We create a upload input field for users to enter their API key.
 uploaded_file = st.sidebar.file_uploader("Choose an image file")
-<<<<<<< Updated upstream
-submit = st.sidebar.button("Send balloons!")
-if submit:
-    st.balloons()
-=======
 if uploaded_file:
     image=Image.open(uploaded_file)
     # not thread safe
@@ -29,7 +20,6 @@ if uploaded_file:
     # file_content= ocr.get_text("./tmp/uploaded_file.png")
     file_content= ocr.get_encoded_file("./tmp/uploaded_file.png")
     st.sidebar.image(image, caption='Uploaded Image', use_container_width=True)
->>>>>>> Stashed changes
 
 
 st.sidebar.markdown("---")
@@ -74,20 +64,6 @@ with MainTab:
 
     # Then, we create a intro text for the app, which we wrap in a st.markdown() widget.
 
-<<<<<<< Updated upstream
-    if submit:
-        st.subheader("Result")
-    else:
-        st.write("")
-        st.markdown("""Upload a scanned form and press submit to get the results""")
-        st.write("")
-
-    # Now, we create a form via `st.form` to collect the user inputs.
-
-    # All widget values will be sent to Streamlit in batch.
-    # It makes the app faster!
-    
-=======
     if uploaded_file:
         print("START: ", datetime.now())  # 2025-04-29 12:06:12.895932    2025-04-29 12:53:35.213940
         parsed_text = functions.translate_text(file_content)
@@ -107,4 +83,3 @@ with MainTab:
         st.write("")
         st.markdown("""Upload a scanned form to get the results""")
         st.write("")
->>>>>>> Stashed changes
