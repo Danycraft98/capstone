@@ -1,12 +1,12 @@
 import os
 import re
+import json
 import nltk
 import logging
 from dotenv import load_dotenv
 
-from langchain.chat_models import ChatOpenAI
+from langchain_openai import ChatOpenAI
 from langchain.prompts import PromptTemplate
-from langchain.chains import LLMChain
 
 logging.getLogger(__name__).setLevel(logging.INFO)
 nltk.download("names")
@@ -32,27 +32,25 @@ def translate_text(text):
     #     max_tokens=2000,
     # )
 
-#--------------
     response = client.responses.create(
-    model="gpt-4o",
-    input=[
-        {
-            "role": "user",
-            "content": [
-                {"type": "input_text", "text": "Please extract the text from the image and return it in a JSON format."},
-                {"type": "input_image", "image_url": f"data:image/png;base64,{text}"},
-            ],
-        }
-    ],
-)
- ##-------------------
+        model="gpt-4o",
+        input=[
+            {
+                "role": "user",
+                "content": [
+                    {"type": "input_text", "text": "Please extract the text from the image and return it in a JSON format."},
+                    {"type": "input_image", "image_url": f"data:image/png;base64,{text}"},
+                ],
+            }
+        ],
+    )
  
  
     # Call the model
 
     logging.info("Calling the model"+str(response))
-    returnString=response.output_text.replace("json", '')
-    returnString= returnString.replace("```", "")
+    returnString = response.output_text.replace("json", '')
+    returnString = json.loads(returnString.replace("```", ""))
     return returnString
 
 
@@ -100,9 +98,9 @@ def tranform_date_to_YYYYMMDD(date_string):
     )
 
     # Create an LLM chain
-    ocr_correction_chain = LLMChain(llm=llm, prompt=prompt)
+    chain = prompt | llm
 
     # Run the chain to correct the OCR text
-    formatted_date = ocr_correction_chain.run(date_string)
-    extractedDate = re.split(r"(\d{4}-\d{2}-\d{2} \d{1,2}:\d{1,2})", formatted_date)
+    response = chain.invoke({"date_string": date_string})#.run(date_string)
+    extractedDate = re.split(r"(\d{4}-\d{2}-\d{2} \d{1,2}:\d{1,2})", response.content)
     return extractedDate[1] if len(extractedDate) > 1 else "unknown"

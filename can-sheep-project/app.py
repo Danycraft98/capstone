@@ -65,11 +65,9 @@ with MainTab:
     # Then, we create a intro text for the app, which we wrap in a st.markdown() widget.
 
     if uploaded_file:
-        print("START: ", datetime.now())  # 2025-04-29 12:06:12.895932    2025-04-29 12:53:35.213940
-        parsed_text = functions.translate_text(file_content)
-        logging.info(f"extract text from image {parsed_text}")
-
-        data_dict = json.loads(parsed_text)
+        logging.info(f"Started extracting process at: {datetime.now()}")
+        data_dict = functions.translate_text(file_content)
+        logging.info(f"extract text from image {data_dict}")
         for key in data_dict:
             if isinstance(data_dict[key], list):
                 data_dict[key] = " ".join(data_dict[key])
@@ -77,7 +75,7 @@ with MainTab:
         st.table(data_dict)
         possibe_dates=functions.parse_dates(data_dict)
         st.table(possibe_dates)
-        print("END:", datetime.now())     # 2025-04-29 12:06:35.881754    2025-04-29 12:53:52.103141
+        logging.info(f"Finished extracting process at: {datetime.now()}")
 
     else:
         st.write("")
