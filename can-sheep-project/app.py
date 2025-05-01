@@ -1,4 +1,4 @@
-import json
+import os
 import logging
 import streamlit as st
 from datetime import datetime
@@ -16,9 +16,10 @@ uploaded_file = st.sidebar.file_uploader("Choose an image file")
 if uploaded_file:
     image=Image.open(uploaded_file)
     # not thread safe
-    image.save("./tmp/uploaded_file.png")
-    # file_content= ocr.get_text("./tmp/uploaded_file.png")
-    file_content= ocr.get_encoded_file("./tmp/uploaded_file.png")
+
+    file_path = os.path.join(os.getcwd(), "./tmp/uploaded_file.png")
+    image.save(file_path)
+    file_content= ocr.get_encoded_file(file_path)
     st.sidebar.image(image, caption='Uploaded Image', use_container_width=True)
 
 
