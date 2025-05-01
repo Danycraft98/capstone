@@ -39,25 +39,23 @@ st.title("Sheep Transportation Tracking")
 MainTab, InfoTab = st.tabs(["Main", "Info"])
 
 with InfoTab:
-
-    st.subheader("What is Streamlit?")
+    st.subheader("What is Sheep Transportation Tracking?")
     st.markdown(
-        "[Streamlit](https://streamlit.io) is a Python library that allows the creation of interactive, data-driven web applications in Python."
+        "[Sheep Transportation Tracking](https://streamlit.io) is a web-based tool designed to monitor and manage the movement of sheep between farms, markets, and facilities. Built using Streamlit, it provides an intuitive interface for farmers, transport coordinators, and agricultural regulators to track transportation events, ensure animal welfare compliance, and analyze trends in livestock movement."
     )
 
-    st.subheader("Resources")
+    st.subheader("Features")
     st.markdown(
         """
-    - [Streamlit Documentation](https://docs.streamlit.io/)
-    - [Cheat sheet](https://docs.streamlit.io/library/cheatsheet)
-    - [Book](https://www.amazon.com/dp/180056550X) (Getting Started with Streamlit for Data Science)
+    - Interactive Dashboard: Visualize sheep transport activity over time and across regions.
+    - Log Management: Add, edit, or remove transportation entries with detailed metadata (date, origin, destination, etc.).
+    - Search & Filter: Quickly find specific records based on farm name, animal count, or transport date.
+    - Compliance Insights: Identify gaps in transport procedures and stay aligned with animal welfare regulations.
     """
     )
 
-    st.subheader("Deploy")
-    st.markdown(
-        "You can quickly deploy Streamlit apps using [Streamlit Community Cloud](https://streamlit.io/cloud) in just a few clicks."
-    )
+    st.subheader("Learn More")
+    st.markdown("""To explore more about the underlying research and objectives, visit the [CanSheep project](https://www.cansheep.ca/)""")
 
 
 with MainTab:
@@ -72,8 +70,11 @@ with MainTab:
             if isinstance(data_dict[key], list):
                 data_dict[key] = " ".join(data_dict[key])
 
+        st.subheader("Extracted Data")
         st.table(data_dict)
         possibe_dates=functions.parse_dates(data_dict)
+        
+        st.subheader("Interpreted Date and Time")
         st.table(possibe_dates)
         logging.info(f"Finished extracting process at: {datetime.now()}")
 
