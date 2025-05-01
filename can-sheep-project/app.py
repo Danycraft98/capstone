@@ -30,7 +30,7 @@ st.sidebar.markdown("---")
 st.sidebar.write(
     """
 
-App created by [Charly Wargnier](https://twitter.com/DataChaz) using [Streamlit](https://streamlit.io/)🎈 and [HuggingFace](https://huggingface.co/inference-api)'s [Distilbart-mnli-12-3](https://huggingface.co/valhalla/distilbart-mnli-12-3) model.
+App created by Matin Mazid and Daniel Lee using [Streamlit](https://streamlit.io/)🎈 and [OpenAI](https://platform.openai.com/docs/overview)'s gpt-4 model.
 
 """
 )
