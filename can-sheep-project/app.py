@@ -65,7 +65,9 @@ with MainTab:
 
     if uploaded_file:
         logging.info(f"Started extracting process at: {datetime.now()}")
-        data_dict = functions.translate_text(file_content)
+        current_date = datetime.now().strftime("%Y-%m-%d")
+        # current_date = '2025-04-30'
+        data_dict = functions.translate_text(file_content,current_date)
         logging.info(f"extract text from image {data_dict}")
         for key in data_dict:
             if isinstance(data_dict[key], list):

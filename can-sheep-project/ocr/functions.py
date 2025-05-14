@@ -21,7 +21,8 @@ llm = ChatOpenAI(model="gpt-4", temperature=0, openai_api_key=openai_api_key)
 # Load and normalize names
 name_list = list(set(name.lower() for name in names.words()))
 
-def translate_text(text):
+def translate_text(text, date_string ):
+    logging.info("Translating text from image")
     from openai import OpenAI
 
     client = OpenAI()
@@ -31,14 +32,20 @@ def translate_text(text):
     #     temperature=0,
     #     max_tokens=2000,
     # )
-
+    
+    promptStr=f"""You are an excellent data entry specialist that is really good at understanding hand written data.
+    
+    extract the text from the image and return it in a JSON format. Change all the dates to the format YYYY-MM-DD.
+    Assume that all the dates are three with in three weeks of {date_string} and animal departure is always before
+    animal arrival.
+    """
     response = client.responses.create(
         model="gpt-4o",
         input=[
             {
                 "role": "user",
                 "content": [
-                    {"type": "input_text", "text": "Please extract the text from the image and return it in a JSON format."},
+                    {"type": "input_text", "text": promptStr},
                     {"type": "input_image", "image_url": f"data:image/png;base64,{text}"},
                 ],
             }
@@ -59,6 +66,7 @@ def parse_dates(data_dict):
     Given a scanned text, this function attempts to extract a dictionary of dates.
     It uses regular expressions to find specific date patterns in the text.
     """
+    logging.info("Parsing dates from the data dictionary")
     raw_datetime = {"Departure": [], "Arrival": []}
     for field in sorted(data_dict):
         if not re.search("(?:date|time)[ _]+of", field.lower()):
@@ -89,7 +97,8 @@ def tranform_date_to_YYYYMMDD(date_string):
     # Define a prompt template for correcting OCR errors
     prompt = PromptTemplate(
         input_variables=["date_string"],
-        template="""Assume the the following datetime is correct please transform it to "%Y-%m-%d %H:%M format. If the date is 
+        template="""
+                    Assume the the following datetime is correct please transform it to "%Y-%m-%d %H:%M format. If the date is 
                     ambigious then assume the year field is the field that matches the last four digits of the current year, if there is an appostrophy 
                     then assume the year follows the appostrophy. If the date is not parsable then return the word "unknown". Also the input time may
                     be non-military time.
