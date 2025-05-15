@@ -113,3 +113,25 @@ def tranform_date_to_YYYYMMDD(date_string):
     response = chain.invoke({"date_string": date_string})#.run(date_string)
     extractedDate = re.split(r"(\d{4}-\d{2}-\d{2} \d{1,2}:\d{1,2})", response.content)
     return extractedDate[1] if len(extractedDate) > 1 else "unknown"
+
+def save_to_mongo(data_dict):
+    """
+    Given a dictionary, this function saves the data to a MongoDB database.
+    It uses the pymongo library to connect to the database and insert the data.
+    """
+
+    from pymongo.mongo_client import MongoClient
+    from pymongo.server_api import ServerApi
+
+    mongoUser= os.getenv("MONGODB_USERNAME")
+    mongoPass= os.getenv("MONGODB_PASSWORD")
+    uri = f"mongodb+srv://{mongoUser}:{mongoPass}@can-sheep.rgm9mzn.mongodb.net/?retryWrites=true&w=majority&appName=can-sheep"
+
+    # Create a new client and connect to the server
+    client = MongoClient(uri, server_api=ServerApi('1'))
+    # Send a ping to confirm a successful connection
+    try:
+        db = client["can-sheep"]
+        db["sheep_transportation"].insert_one(data_dict)
+    except Exception as e:
+        print(e)
