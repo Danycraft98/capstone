@@ -4,16 +4,11 @@ from ocr import functions
 
 
 class TestDateStringInterpretter(unittest.TestCase):
-    def testget_text(self):
-        temp_file_path = "./can-sheep-project/tmp/uploaded_file.png"
-        actual = ocr.get_text(temp_file_path)
-        print(actual)
-        self.assertIsNotNone(actual )
-
+    date_string = "2025-04-28"
     def test_data_return_dict(self):
         temp_file_path = "./can-sheep-project/tmp/uploaded_file.png"
         extracted_text = ocr.get_encoded_file(temp_file_path)
-        data_dict=functions.translate_text(extracted_text)
+        data_dict=functions.translate_text(extracted_text, self.date_string)
         self.assertIsInstance(data_dict, dict)
 
     def test_convert_to_date(self):

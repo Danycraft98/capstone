@@ -9,11 +9,11 @@ from ocr import functions
 
 logger = logging.getLogger(__name__)
 
-
+data_dict = {}
 # For elements to be displayed in the sidebar, we need to add the sidebar element in the widget.
 # We create a upload input field for users to enter their API key.
 uploaded_file = st.sidebar.file_uploader("Choose an image file")
-if uploaded_file:
+if uploaded_file is not None :
     image=Image.open(uploaded_file)
     # not thread safe
 
@@ -22,7 +22,15 @@ if uploaded_file:
     file_content= ocr.get_encoded_file(file_path)
     st.sidebar.image(image, caption='Uploaded Image', use_container_width=True)
 
+    logging.info(f"Started extracting process at: {datetime.now()}")
+    current_date = datetime.now().strftime("%Y-%m-%d")
+    # current_date = '2025-04-30'
+    data_dict = functions.translate_text(file_content,current_date)
+    logging.info(f"extract text from image {data_dict}")
 
+    for key in data_dict:
+        if isinstance(data_dict[key], list):
+            data_dict[key] = " ".join(data_dict[key])
 st.sidebar.markdown("---")
 
 
@@ -62,17 +70,12 @@ with InfoTab:
 with MainTab:
 
     # Then, we create a intro text for the app, which we wrap in a st.markdown() widget.
+    if uploaded_file is None:
+        st.write("")
+        st.markdown("""Upload a scanned form to get the results""")
+        st.write("")
 
-    if uploaded_file:
-        logging.info(f"Started extracting process at: {datetime.now()}")
-        current_date = datetime.now().strftime("%Y-%m-%d")
-        # current_date = '2025-04-30'
-        data_dict = functions.translate_text(file_content,current_date)
-        logging.info(f"extract text from image {data_dict}")
-        for key in data_dict:
-            if isinstance(data_dict[key], list):
-                data_dict[key] = " ".join(data_dict[key])
-
+    else :
         st.subheader("Extracted Data")
         st.table(data_dict)
         possibe_dates=functions.parse_dates(data_dict)
@@ -80,8 +83,11 @@ with MainTab:
         st.subheader("Interpreted Date and Time")
         st.table(possibe_dates)
         logging.info(f"Finished extracting process at: {datetime.now()}")
+        saveMe=st.button("Save to MongoDB")
+        if saveMe:
+            functions.save_to_mongo(data_dict)
+            st.success("Data saved to MongoDB successfully!")
+            st.balloons()
+        else:
+            st.write("Data not saved to MongoDB") 
 
-    else:
-        st.write("")
-        st.markdown("""Upload a scanned form to get the results""")
-        st.write("")
